@@ -117,7 +117,10 @@ public class RacingActivity extends AppCompatActivity {
         tvRaceStatus.setText("Race in Progress...");
 
         // Play racing sound
-        SoundManager.getInstance().playSound(this, R.raw.racing_sound, true);
+        //SoundManager.getInstance().playSound(this, R.raw.racing_sound, true);
+
+        SoundManager.getInstance().stopBgm(); //stop nhạc theme khi vô đua xe
+        SoundManager.getInstance().playBgm(this, R.raw.racingsound, true);
 
         Random random = new Random();
 
@@ -153,7 +156,7 @@ public class RacingActivity extends AppCompatActivity {
                         // All cars finished
                         raceFinished = true;
                         btnReset.setEnabled(true);
-                        SoundManager.getInstance().stopSound();
+                        SoundManager.getInstance().stopBgm();
 
                         // Wait a moment then show results
                         new Handler().postDelayed(() -> showResults(), 1500);
@@ -189,7 +192,7 @@ public class RacingActivity extends AppCompatActivity {
         btnReset.setEnabled(false);
         tvRaceStatus.setText("Ready to Race!");
 
-        SoundManager.getInstance().stopSound();
+        SoundManager.getInstance().stopBgm();
     }
 
     private void showResults() {
@@ -226,6 +229,6 @@ public class RacingActivity extends AppCompatActivity {
                 animator.cancel();
             }
         }
-        SoundManager.getInstance().stopSound();
+        SoundManager.getInstance().stopBgm();
     }
 }

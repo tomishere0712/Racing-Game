@@ -36,7 +36,7 @@ public class ResultActivity extends AppCompatActivity {
         calculateWinnings();
 
         // Play victory sound
-        SoundManager.getInstance().playSound(this, R.raw.victory_sound, false);
+        //SoundManager.getInstance().playSound(this, R.raw.victory_sound, false);
 
         btnBackToBetting.setOnClickListener(v -> backToBetting());
         btnPlayAgain.setOnClickListener(v -> playAgain());
@@ -133,9 +133,13 @@ public class ResultActivity extends AppCompatActivity {
             tvCongratulations.setText("🎉 Congratulations! You Won! 🎉");
             tvWinnings.setText("Total Winnings: $" + String.format("%.2f", totalWinnings));
             UserManager.getInstance().getCurrentUser().addBalance(totalWinnings);
+
+            SoundManager.getInstance().playSfx(this, R.raw.winsound);
         } else {
             tvCongratulations.setText("Better Luck Next Time!");
             tvWinnings.setText("Total Winnings: $0.00");
+
+            SoundManager.getInstance().playSfx(this, R.raw.losesound);
         }
 
         UserManager.getInstance().saveUserBalance(this);
@@ -164,7 +168,7 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private void backToBetting() {
-        SoundManager.getInstance().stopSound();
+        SoundManager.getInstance().stopSfx();
         Intent intent = new Intent(ResultActivity.this, BettingActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
@@ -178,6 +182,6 @@ public class ResultActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        SoundManager.getInstance().stopSound();
+        SoundManager.getInstance().stopSfx();
     }
 }

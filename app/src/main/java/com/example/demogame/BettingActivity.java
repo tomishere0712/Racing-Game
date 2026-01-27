@@ -1,6 +1,7 @@
 package com.example.demogame;
 
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -49,7 +50,7 @@ public class BettingActivity extends AppCompatActivity {
         setupCarBettingUI();
         updateBalance();
 
-        SoundManager.getInstance().playSound(this, R.raw.betting_sound, true);
+        //SoundManager.getInstance().playSound(this, R.raw.betting_sound, true);
 
         btnStartRace.setOnClickListener(v -> startRace());
         btnLogout.setOnClickListener(v -> logout());
@@ -114,6 +115,7 @@ public class BettingActivity extends AppCompatActivity {
                     try {
                         if (!s.toString().isEmpty()) {
                             bets.put(car.getId(), Double.parseDouble(s.toString()));
+                            playBetSound();
                         } else {
                             bets.remove(car.getId());
                         }
@@ -181,6 +183,7 @@ public class BettingActivity extends AppCompatActivity {
             UserManager.getInstance().getCurrentUser().addBalance(amount);
             UserManager.getInstance().saveUserBalance(this);
             updateBalance();
+            playBetSound();
 
             Toast.makeText(this, "+$" + amount + " added!", Toast.LENGTH_SHORT).show();
         });
@@ -208,20 +211,40 @@ public class BettingActivity extends AppCompatActivity {
 
         Intent i = new Intent(this, RacingActivity.class);
         i.putExtra("bets", new HashMap<>(bets));
-        SoundManager.getInstance().stopSound();
+        SoundManager.getInstance().stopBgm();
         startActivity(i);
     }
 
     private void logout() {
         UserManager.getInstance().logout();
-        SoundManager.getInstance().stopSound();
+        SoundManager.getInstance().stopBgm();
         startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        SoundManager.getInstance().stopSound();
+//    @Override
+//    protected void onDestroy() {
+//        super.onDestroy();
+//        SoundManager.getInstance().stopSound();
+//    }
+
+    private void playBetSound() {
+        MediaPlayer mp = MediaPlayer.create(this, R.raw.bettingsound);
+        if (mp != null) {
+            mp.setOnCompletionListener(MediaPlayer::release);
+            mp.start();
+        }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        SoundManager.getInstance().playBgm(
+                this,
+                R.raw.themesound2,
+                true
+        );
+    }
+
 }

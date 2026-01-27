@@ -29,7 +29,8 @@ public class LoginActivity extends AppCompatActivity {
         setupListeners();
 
         // Play login sound
-        SoundManager.getInstance().playSound(this, R.raw.login_sound, true);
+        //SoundManager.getInstance().playSound(this, R.raw.login_sound, true);
+        SoundManager.getInstance().playBgm(this, R.raw.themesound2, true);
     }
 
     private void initializeViews() {
@@ -63,7 +64,7 @@ public class LoginActivity extends AppCompatActivity {
 
         if (UserManager.getInstance().login(username, password, this)) {
             Toast.makeText(this, "Welcome, " + username + "!", Toast.LENGTH_SHORT).show();
-            SoundManager.getInstance().stopSound();
+            //SoundManager.getInstance().stopSound();
             Intent intent = new Intent(LoginActivity.this, BettingActivity.class);
             startActivity(intent);
             finish();
@@ -93,7 +94,7 @@ public class LoginActivity extends AppCompatActivity {
 
         if (UserManager.getInstance().register(username, password, this)) {
             Toast.makeText(this, "Registration successful! Starting balance: $10,000", Toast.LENGTH_LONG).show();
-            SoundManager.getInstance().stopSound();
+            //SoundManager.getInstance().stopSound();
             Intent intent = new Intent(LoginActivity.this, BettingActivity.class);
             startActivity(intent);
             finish();
@@ -128,6 +129,12 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        SoundManager.getInstance().stopSound();
+        //SoundManager.getInstance().stopSound();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SoundManager.getInstance().playBgm(this, R.raw.themesound2, true);
     }
 }

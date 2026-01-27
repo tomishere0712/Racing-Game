@@ -4,6 +4,8 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.graphics.drawable.Animatable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -74,11 +76,11 @@ public class RacingActivity extends AppCompatActivity {
 
     private void initializeCars() {
         cars = new ArrayList<>();
-        cars.add(new Car(1, "Red Racer", R.drawable.car_red));
-        cars.add(new Car(2, "Blue Lightning", R.drawable.car_blue));
-        cars.add(new Car(3, "Green Machine", R.drawable.car_green));
-        cars.add(new Car(4, "Yellow Thunder", R.drawable.car_yellow));
-        cars.add(new Car(5, "Purple Storm", R.drawable.car_purple));
+        cars.add(new Car(1, "Red Racer", R.drawable.car_red_animated));
+        cars.add(new Car(2, "Blue Lightning", R.drawable.car_blue_animated));
+        cars.add(new Car(3, "Green Machine", R.drawable.car_green_animated));
+        cars.add(new Car(4, "Yellow Thunder", R.drawable.car_yellow_animated));
+        cars.add(new Car(5, "Purple Storm", R.drawable.car_purple_animated));
     }
 
     private void setupRaceTrack() {
@@ -87,6 +89,11 @@ public class RacingActivity extends AppCompatActivity {
             Car car = cars.get(i);
             carView.setImageResource(car.getDrawableResId());
             carView.setX(0);
+
+            Drawable d = carView.getDrawable();
+            if (d instanceof Animatable) {
+                ((Animatable) d).start();
+            }
         }
 
         // Calculate race distance (screen width - car width)

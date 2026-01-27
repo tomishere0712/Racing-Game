@@ -4,7 +4,10 @@
     android:height="60dp"
     android:viewportWidth="100"
     android:viewportHeight="60">
-
+<group
+    android:name="car_group1"
+    android:pivotX="50"
+    android:pivotY="30">
     <!-- Car body -->
     <path
         android:fillColor="#1E88E5"
@@ -14,7 +17,7 @@
     <path
         android:fillColor="#90CAF9"
         android:pathData="M30,20 L40,20 L40,30 L30,25 Z"/>
-
+</group>
     <!-- Front wheel -->
     <path
         android:fillColor="#212121"

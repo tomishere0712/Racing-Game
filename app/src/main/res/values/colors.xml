@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Racing Game Colors -->
+    <color name="racing_blue">#2196F3</color>
+    <color name="racing_green">#4CAF50</color>
+    <color name="racing_red">#F44336</color>
+    <color name="racing_gold">#FFD700</color>
+    <color name="racing_dark">#212121</color>
+    <color name="racing_gray">#424242</color>
+
+    <!-- Podium Colors -->
+    <color name="gold">#FFD700</color>
+    <color name="silver">#C0C0C0</color>
+    <color name="bronze">#CD7F32</color>
+</resources>
+

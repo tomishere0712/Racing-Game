@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Racing Game</string>
+
+    <!-- Login -->
+    <string name="login_title">Racing Game - Login</string>
+    <string name="username_hint">Username</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Login</string>
+    <string name="register_button">Register</string>
+
+    <!-- Betting -->
+    <string name="place_bets_title">🏁 Place Your Bets 🏁</string>
+    <string name="start_race">🏁 START RACE 🏁</string>
+    <string name="balance_label">Balance: $%.2f</string>
+    <string name="total_bet_label">Total Bet: $%.2f</string>
+
+    <!-- Racing -->
+    <string name="ready_to_race">Ready to Race!</string>
+    <string name="race_in_progress">Race in Progress...</string>
+    <string name="start_button">START</string>
+    <string name="reset_button">RESET</string>
+
+    <!-- Results -->
+    <string name="congratulations">🎉 Congratulations! You Won! 🎉</string>
+    <string name="better_luck">Better Luck Next Time!</string>
+    <string name="play_again">🎮 PLAY AGAIN 🎮</string>
+    <string name="back_to_betting">↩️ Back to Betting</string>
+</resources>
+

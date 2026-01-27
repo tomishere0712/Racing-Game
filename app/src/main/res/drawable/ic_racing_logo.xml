@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Checkered flag circle background -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M60,60 m-55,0 a55,55 0,1,1 110,0 a55,55 0,1,1 -110,0"/>
+
+    <!-- Racing flag -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,30 L35,80 L40,80 L40,30 Z"/>
+
+    <!-- Checkered pattern -->
+    <path
+        android:fillColor="#212121"
+        android:pathData="M40,30 L50,30 L50,40 L40,40 Z"/>
+    <path
+        android:fillColor="#212121"
+        android:pathData="M60,30 L70,30 L70,40 L60,40 Z"/>
+    <path
+        android:fillColor="#212121"
+        android:pathData="M50,40 L60,40 L60,50 L50,50 Z"/>
+    <path
+        android:fillColor="#212121"
+        android:pathData="M70,40 L80,40 L80,50 L70,50 Z"/>
+    <path
+        android:fillColor="#212121"
+        android:pathData="M40,50 L50,50 L50,60 L40,60 Z"/>
+    <path
+        android:fillColor="#212121"
+        android:pathData="M60,50 L70,50 L70,60 L60,60 Z"/>
+
+    <!-- White squares -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,30 L60,30 L60,40 L50,40 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,30 L80,30 L80,40 L70,40 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,40 L50,40 L50,50 L40,50 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,40 L70,40 L70,50 L60,50 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,50 L60,50 L60,60 L50,60 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,50 L80,50 L80,60 L70,60 Z"/>
+</vector>

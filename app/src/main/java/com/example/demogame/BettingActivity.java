@@ -13,10 +13,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.AlertDialog;
+import android.text.InputType;
+
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.demogame.models.Bet;
 import com.example.demogame.models.Car;
 import com.example.demogame.utils.SoundManager;
 import com.example.demogame.utils.UserManager;
@@ -30,11 +32,12 @@ public class BettingActivity extends AppCompatActivity {
 
     private TextView tvBalance, tvTotalBet, tvUsername;
     private LinearLayout carBettingContainer;
-    private Button btnStartRace, btnLogout;
+    private Button btnStartRace, btnLogout, btnAddMoney;
+
     private List<Car> cars;
-    private Map<Integer, Double> bets; // carId -> bet amount
-    private Map<Integer, EditText> betInputs; // carId -> EditText
-    private Map<Integer, CheckBox> carCheckboxes; // carId -> CheckBox
+    private Map<Integer, Double> bets;
+    private Map<Integer, EditText> betInputs;
+    private Map<Integer, CheckBox> carCheckboxes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,11 +49,11 @@ public class BettingActivity extends AppCompatActivity {
         setupCarBettingUI();
         updateBalance();
 
-        // Play betting sound
         SoundManager.getInstance().playSound(this, R.raw.betting_sound, true);
 
         btnStartRace.setOnClickListener(v -> startRace());
         btnLogout.setOnClickListener(v -> logout());
+        btnAddMoney.setOnClickListener(v -> addMoney());
     }
 
     private void initializeViews() {
@@ -58,8 +61,10 @@ public class BettingActivity extends AppCompatActivity {
         tvTotalBet = findViewById(R.id.tvTotalBet);
         tvUsername = findViewById(R.id.tvUsername);
         carBettingContainer = findViewById(R.id.carBettingContainer);
+
         btnStartRace = findViewById(R.id.btnStartRace);
         btnLogout = findViewById(R.id.btnLogout);
+        btnAddMoney = findViewById(R.id.btnAddMoney);
 
         bets = new HashMap<>();
         betInputs = new HashMap<>();
@@ -79,25 +84,21 @@ public class BettingActivity extends AppCompatActivity {
         LayoutInflater inflater = LayoutInflater.from(this);
 
         for (Car car : cars) {
-            View carBetView = inflater.inflate(R.layout.item_car_bet, carBettingContainer, false);
+            View view = inflater.inflate(R.layout.item_car_bet, carBettingContainer, false);
 
-            ImageView ivCar = carBetView.findViewById(R.id.ivCar);
-            TextView tvCarName = carBetView.findViewById(R.id.tvCarName);
-            CheckBox cbSelectCar = carBetView.findViewById(R.id.cbSelectCar);
-            EditText etBetAmount = carBetView.findViewById(R.id.etBetAmount);
+            ImageView ivCar = view.findViewById(R.id.ivCar);
+            TextView tvCarName = view.findViewById(R.id.tvCarName);
+            CheckBox cbSelectCar = view.findViewById(R.id.cbSelectCar);
+            EditText etBetAmount = view.findViewById(R.id.etBetAmount);
 
             ivCar.setImageResource(car.getDrawableResId());
             tvCarName.setText(car.getName());
 
-            carCheckboxes.put(car.getId(), cbSelectCar);
-            betInputs.put(car.getId(), etBetAmount);
-
-            // Initially disable bet input
             etBetAmount.setEnabled(false);
 
-            cbSelectCar.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                etBetAmount.setEnabled(isChecked);
-                if (!isChecked) {
+            cbSelectCar.setOnCheckedChangeListener((b, checked) -> {
+                etBetAmount.setEnabled(checked);
+                if (!checked) {
                     etBetAmount.setText("");
                     bets.remove(car.getId());
                 }
@@ -105,109 +106,117 @@ public class BettingActivity extends AppCompatActivity {
             });
 
             etBetAmount.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void afterTextChanged(Editable s) {}
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     try {
                         if (!s.toString().isEmpty()) {
-                            double amount = Double.parseDouble(s.toString());
-                            bets.put(car.getId(), amount);
+                            bets.put(car.getId(), Double.parseDouble(s.toString()));
                         } else {
                             bets.remove(car.getId());
                         }
-                    } catch (NumberFormatException e) {
+                    } catch (Exception e) {
                         bets.remove(car.getId());
                     }
                     updateTotalBet();
                 }
-
-                @Override
-                public void afterTextChanged(Editable s) {}
             });
 
-            carBettingContainer.addView(carBetView);
+            carBettingContainer.addView(view);
         }
     }
 
     private void updateBalance() {
         if (UserManager.getInstance().getCurrentUser() != null) {
-            tvUsername.setText("Player: " + UserManager.getInstance().getCurrentUser().getUsername());
-            tvBalance.setText(String.format("Balance: $%.2f", UserManager.getInstance().getCurrentUser().getBalance()));
+            tvUsername.setText("Player: " +
+                    UserManager.getInstance().getCurrentUser().getUsername());
+            tvBalance.setText(String.format(
+                    "Balance: $%.2f",
+                    UserManager.getInstance().getCurrentUser().getBalance()));
         }
     }
 
     private void updateTotalBet() {
         double total = 0;
-        for (double amount : bets.values()) {
-            total += amount;
-        }
+        for (double v : bets.values()) total += v;
         tvTotalBet.setText(String.format("Total Bet: $%.2f", total));
+    }
+
+    // 🔥 ADD MONEY
+    private void addMoney() {
+        if (UserManager.getInstance().getCurrentUser() == null) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Add Money");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("Enter amount");
+
+        builder.setView(input);
+
+        builder.setPositiveButton("Add", (dialog, which) -> {
+            String value = input.getText().toString().trim();
+
+            if (value.isEmpty()) {
+                Toast.makeText(this, "Please enter amount", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double amount;
+            try {
+                amount = Double.parseDouble(value);
+            } catch (Exception e) {
+                Toast.makeText(this, "Invalid amount", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (amount <= 0) {
+                Toast.makeText(this, "Amount must be greater than 0", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            UserManager.getInstance().getCurrentUser().addBalance(amount);
+            UserManager.getInstance().saveUserBalance(this);
+            updateBalance();
+
+            Toast.makeText(this, "+$" + amount + " added!", Toast.LENGTH_SHORT).show();
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 
     private void startRace() {
         if (bets.isEmpty()) {
-            Toast.makeText(this, "Please place at least one bet!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Place at least one bet!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        double totalBet = 0;
-        for (double amount : bets.values()) {
-            totalBet += amount;
-        }
+        double total = 0;
+        for (double v : bets.values()) total += v;
 
-        if (totalBet <= 0) {
-            Toast.makeText(this, "Please enter valid bet amounts!", Toast.LENGTH_SHORT).show();
+        if (total > UserManager.getInstance().getCurrentUser().getBalance()) {
+            Toast.makeText(this, "Insufficient balance!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (totalBet > UserManager.getInstance().getCurrentUser().getBalance()) {
-            Toast.makeText(this, "Insufficient balance! Total bet exceeds your balance.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Check minimum bet
-        for (double amount : bets.values()) {
-            if (amount < 10) {
-                Toast.makeText(this, "Minimum bet per car is $10", Toast.LENGTH_SHORT).show();
-                return;
-            }
-        }
-
-        // Deduct bet amount
-        UserManager.getInstance().getCurrentUser().deductBalance(totalBet);
+        UserManager.getInstance().getCurrentUser().deductBalance(total);
         UserManager.getInstance().saveUserBalance(this);
 
-        // Start race activity
-        Intent intent = new Intent(BettingActivity.this, RacingActivity.class);
-        intent.putExtra("bets", new HashMap<>(bets));
+        Intent i = new Intent(this, RacingActivity.class);
+        i.putExtra("bets", new HashMap<>(bets));
         SoundManager.getInstance().stopSound();
-        startActivity(intent);
+        startActivity(i);
     }
 
     private void logout() {
         UserManager.getInstance().logout();
         SoundManager.getInstance().stopSound();
-        Intent intent = new Intent(BettingActivity.this, LoginActivity.class);
-        startActivity(intent);
+        startActivity(new Intent(this, LoginActivity.class));
         finish();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        updateBalance();
-        // Clear previous bets
-        bets.clear();
-        for (CheckBox cb : carCheckboxes.values()) {
-            cb.setChecked(false);
-        }
-        for (EditText et : betInputs.values()) {
-            et.setText("");
-            et.setEnabled(false);
-        }
-        updateTotalBet();
     }
 
     @Override

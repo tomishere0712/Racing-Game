@@ -5,7 +5,8 @@
     android:orientation="vertical"
     android:gravity="center"
     android:background="@drawable/bg_login"
-    android:padding="24dp">
+    android:padding="24dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ImageView
         android:layout_width="120dp"
@@ -26,10 +27,13 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Username"
         android:textColorHint="@color/white"
+        android:hint="Username"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="16dp"
+        app:boxStrokeColor="@color/white"
+        app:boxStrokeWidthFocused="2dp"
+        app:hintTextColor="@color/white">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etUsername"
@@ -42,10 +46,13 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Password"
         android:textColorHint="@color/white"
+        android:hint="Password"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_marginBottom="24dp">
+        android:layout_marginBottom="16dp"
+        app:boxStrokeColor="@color/white"
+        app:boxStrokeWidthFocused="2dp"
+        app:hintTextColor="@color/white">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etPassword"

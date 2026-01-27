@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:background="@drawable/bg_betting">
 
-    <!-- Header -->
+    <!-- HEADER -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -14,6 +14,7 @@
         android:background="@color/racing_dark"
         android:gravity="center_vertical">
 
+        <!-- LEFT INFO -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -33,7 +34,7 @@
                 android:id="@+id/tvBalance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Balance: $10,000"
+                android:text="Balance: $0.00"
                 android:textColor="@color/racing_gold"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -49,15 +50,30 @@
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btnLogout"
+        <!-- RIGHT BUTTONS -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Logout"
-            android:backgroundTint="@color/racing_red"/>
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnAddMoney"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+ Money"
+                android:backgroundTint="@color/racing_green"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Logout"
+                android:backgroundTint="@color/racing_red"/>
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- Title -->
+    <!-- TITLE -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -68,7 +84,7 @@
         android:gravity="center"
         android:padding="16dp"/>
 
-    <!-- Betting Container -->
+    <!-- BET LIST -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -82,7 +98,7 @@
             android:orientation="vertical"/>
     </ScrollView>
 
-    <!-- Start Race Button -->
+    <!-- START BUTTON -->
     <Button
         android:id="@+id/btnStartRace"
         android:layout_width="match_parent"

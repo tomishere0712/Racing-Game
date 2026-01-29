@@ -74,11 +74,13 @@ public class ResultActivity extends AppCompatActivity {
             ivThird.setImageResource(carDrawables.get(2));
             tvThirdName.setText("🥉 3rd: " + carNames.get(2));
 
-            // Display remaining positions
+            // Display remaining positions (4th, 5th)
             for (int i = 3; i < carNames.size(); i++) {
                 TextView tv = new TextView(this);
                 tv.setText((i + 1) + "th: " + carNames.get(i));
                 tv.setTextSize(16);
+                tv.setTextColor(Color.BLACK); // Màu đen
+                tv.setTypeface(null, Typeface.BOLD); // Chữ đậm
                 tv.setPadding(16, 8, 16, 8);
                 betResultsContainer.addView(tv);
             }

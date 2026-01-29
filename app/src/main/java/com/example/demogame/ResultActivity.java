@@ -1,6 +1,8 @@
 package com.example.demogame;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -79,8 +81,8 @@ public class ResultActivity extends AppCompatActivity {
                 TextView tv = new TextView(this);
                 tv.setText((i + 1) + "th: " + carNames.get(i));
                 tv.setTextSize(16);
-                tv.setTextColor(Color.BLACK); // Màu đen
-                tv.setTypeface(null, Typeface.BOLD); // Chữ đậm
+                tv.setTextColor(Color.BLACK);
+                tv.setTypeface(null, Typeface.BOLD);
                 tv.setPadding(16, 8, 16, 8);
                 betResultsContainer.addView(tv);
             }

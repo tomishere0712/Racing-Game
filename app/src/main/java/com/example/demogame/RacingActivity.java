@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.demogame.models.Car;
 import com.example.demogame.utils.SoundManager;
+import com.example.demogame.utils.UserManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +41,8 @@ public class RacingActivity extends AppCompatActivity {
     private boolean raceFinished = false;
     private int finishCount = 0;
     private float raceDistance;
+    private Random random = new Random(System.currentTimeMillis());
+    private Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +57,7 @@ public class RacingActivity extends AppCompatActivity {
         setupRaceTrack();
 
         btnStart.setOnClickListener(v -> startRace());
-        btnReset.setOnClickListener(v -> resetRace());
+        btnReset.setOnClickListener(v -> resetAndRaceAgain());
     }
 
     private void initializeViews() {
@@ -71,7 +74,8 @@ public class RacingActivity extends AppCompatActivity {
 
         animators = new ArrayList<>();
 
-        btnReset.setEnabled(false);
+        // Reset button always enabled
+        btnReset.setEnabled(true);
     }
 
     private void initializeCars() {
@@ -103,6 +107,68 @@ public class RacingActivity extends AppCompatActivity {
         }, 100);
     }
 
+    /**
+     * Tính toán tỉ lệ thắng như nhà cái:
+     * - Bet ít (< 20% balance): Tỉ lệ thắng cao 70-85%
+     * - Bet vừa (20-50% balance): Tỉ lệ thắng trung bình 50-65%
+     * - Bet cao (50-80% balance): Tỉ lệ thắng thấp hơn 35-50%
+     * - Bet rất cao (> 80% balance): Tỉ lệ thắng thấp 25-40% nhưng vẫn có cơ hội
+     */
+    private int calculateWinnerCarId() {
+        if (bets == null || bets.isEmpty()) {
+            // Không có bet, random hoàn toàn
+            return random.nextInt(5) + 1;
+        }
+
+        double userBalance = UserManager.getInstance().getCurrentUser().getBalance();
+        double totalBet = 0;
+        int highestBetCarId = -1;
+        double highestBetAmount = 0;
+
+        // Tìm xe được bet nhiều nhất
+        for (Map.Entry<Integer, Double> entry : bets.entrySet()) {
+            totalBet += entry.getValue();
+            if (entry.getValue() > highestBetAmount) {
+                highestBetAmount = entry.getValue();
+                highestBetCarId = entry.getKey();
+            }
+        }
+
+        // Tính tỉ lệ bet so với balance
+        double betRatio = totalBet / (userBalance + totalBet); // Tính trên balance trước khi bet
+
+        // Tính tỉ lệ thắng dựa trên mức bet
+        double winChance;
+        if (betRatio < 0.2) {
+            // Bet ít: tỉ lệ thắng cao 70-85%
+            winChance = 0.70 + random.nextDouble() * 0.15;
+        } else if (betRatio < 0.5) {
+            // Bet vừa: tỉ lệ thắng trung bình 50-65%
+            winChance = 0.50 + random.nextDouble() * 0.15;
+        } else if (betRatio < 0.8) {
+            // Bet cao: tỉ lệ thắng thấp hơn 35-50%
+            winChance = 0.35 + random.nextDouble() * 0.15;
+        } else {
+            // Bet rất cao: tỉ lệ thắng thấp 25-40% nhưng vẫn có cơ hội
+            winChance = 0.25 + random.nextDouble() * 0.15;
+        }
+
+        // Random xem có thắng không
+        if (random.nextDouble() < winChance && highestBetCarId != -1) {
+            // Thắng - xe được bet nhiều nhất sẽ thắng
+            return highestBetCarId;
+        } else {
+            // Thua - chọn random xe khác (không phải xe được bet nhiều nhất)
+            List<Integer> otherCars = new ArrayList<>();
+            for (int i = 1; i <= 5; i++) {
+                if (i != highestBetCarId) {
+                    otherCars.add(i);
+                }
+            }
+            return otherCars.get(random.nextInt(otherCars.size()));
+        }
+    }
+
     private void startRace() {
         if (raceStarted) {
             Toast.makeText(this, "Race already in progress!", Toast.LENGTH_SHORT).show();
@@ -113,24 +179,31 @@ public class RacingActivity extends AppCompatActivity {
         raceFinished = false;
         finishCount = 0;
         btnStart.setEnabled(false);
-        btnReset.setEnabled(false);
         tvRaceStatus.setText("Race in Progress...");
 
         // Play racing sound
-        //SoundManager.getInstance().playSound(this, R.raw.racing_sound, true);
-
-        SoundManager.getInstance().stopBgm(); //stop nhạc theme khi vô đua xe
+        SoundManager.getInstance().stopBgm();
         SoundManager.getInstance().playBgm(this, R.raw.racingsound, true);
 
-        Random random = new Random();
+        // Reseed random for each race
+        random = new Random(System.currentTimeMillis());
+
+        // Xác định xe thắng dựa trên tỉ lệ nhà cái
+        int winnerCarId = calculateWinnerCarId();
 
         for (int i = 0; i < cars.size(); i++) {
             final Car car = cars.get(i);
             final ImageView carView = carViews.get(i);
-            final int carIndex = i;
 
-            // Random speed: 60-100 (lower value = faster)
-            int baseDuration = 3000 + random.nextInt(4000); // 3-7 seconds
+            // Tính thời gian chạy: xe thắng nhanh nhất, các xe khác chậm hơn random
+            int baseDuration;
+            if (car.getId() == winnerCarId) {
+                // Xe thắng: 3-4 giây
+                baseDuration = 3000 + random.nextInt(1000);
+            } else {
+                // Xe khác: 4-7 giây (chậm hơn)
+                baseDuration = 4000 + random.nextInt(3000);
+            }
 
             ValueAnimator animator = ValueAnimator.ofFloat(0, raceDistance);
             animator.setDuration(baseDuration);
@@ -155,11 +228,10 @@ public class RacingActivity extends AppCompatActivity {
                     if (finishCount == cars.size()) {
                         // All cars finished
                         raceFinished = true;
-                        btnReset.setEnabled(true);
                         SoundManager.getInstance().stopBgm();
 
                         // Wait a moment then show results
-                        new Handler().postDelayed(() -> showResults(), 1500);
+                        handler.postDelayed(() -> showResults(), 1500);
                     }
                 }
             });
@@ -169,30 +241,48 @@ public class RacingActivity extends AppCompatActivity {
         }
     }
 
-    private void resetRace() {
-        // Stop all animations
+    private void resetAndRaceAgain() {
+        // Remove any pending callbacks
+        handler.removeCallbacksAndMessages(null);
+
+        // Stop all animations immediately
         for (ValueAnimator animator : animators) {
-            if (animator != null && animator.isRunning()) {
+            if (animator != null) {
+                animator.removeAllListeners();
+                animator.removeAllUpdateListeners();
                 animator.cancel();
             }
         }
         animators.clear();
 
-        // Reset car positions
+        // Reset car positions and animations
         for (int i = 0; i < carViews.size(); i++) {
-            carViews.get(i).setX(0);
+            ImageView carView = carViews.get(i);
+            carView.setX(0);
             cars.get(i).setPosition(0);
             cars.get(i).setFinishPosition(0);
+
+            // Restart car animation
+            Drawable d = carView.getDrawable();
+            if (d instanceof Animatable) {
+                ((Animatable) d).stop();
+                ((Animatable) d).start();
+            }
         }
 
         raceStarted = false;
         raceFinished = false;
         finishCount = 0;
-        btnStart.setEnabled(true);
-        btnReset.setEnabled(false);
-        tvRaceStatus.setText("Ready to Race!");
+        btnStart.setEnabled(false);
+        tvRaceStatus.setText("Restarting Race...");
 
         SoundManager.getInstance().stopBgm();
+
+        // Reseed random để có kết quả mới hoàn toàn
+        random = new Random(System.currentTimeMillis());
+
+        // Tự động bắt đầu đua lại sau 800ms
+        handler.postDelayed(() -> startRace(), 800);
     }
 
     private void showResults() {
@@ -224,8 +314,11 @@ public class RacingActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        handler.removeCallbacksAndMessages(null);
         for (ValueAnimator animator : animators) {
-            if (animator != null && animator.isRunning()) {
+            if (animator != null) {
+                animator.removeAllListeners();
+                animator.removeAllUpdateListeners();
                 animator.cancel();
             }
         }

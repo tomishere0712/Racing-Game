@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
+import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -43,18 +44,19 @@ public class RacingActivity extends AppCompatActivity {
     private float raceDistance;
     private Random random = new Random(System.currentTimeMillis());
     private Handler handler = new Handler();
+    private double betRatio = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_racing);
 
-        // Get bets from intent
         bets = (HashMap<Integer, Double>) getIntent().getSerializableExtra("bets");
 
         initializeViews();
         initializeCars();
         setupRaceTrack();
+        calculateBetRatio();
 
         btnStart.setOnClickListener(v -> startRace());
         btnReset.setOnClickListener(v -> resetAndRaceAgain());
@@ -73,8 +75,6 @@ public class RacingActivity extends AppCompatActivity {
         carViews.add(findViewById(R.id.ivCar5));
 
         animators = new ArrayList<>();
-
-        // Reset button always enabled
         btnReset.setEnabled(true);
     }
 
@@ -100,65 +100,55 @@ public class RacingActivity extends AppCompatActivity {
             }
         }
 
-        // Calculate race distance (screen width - car width)
         new Handler().postDelayed(() -> {
             View trackView = findViewById(R.id.trackContainer);
             raceDistance = trackView.getWidth() - carViews.get(0).getWidth() - 100;
         }, 100);
     }
 
-    /**
-     * Tính toán tỉ lệ thắng như nhà cái:
-     * - Bet ít (< 20% balance): Tỉ lệ thắng cao 70-85%
-     * - Bet vừa (20-50% balance): Tỉ lệ thắng trung bình 50-65%
-     * - Bet cao (50-80% balance): Tỉ lệ thắng thấp hơn 35-50%
-     * - Bet rất cao (> 80% balance): Tỉ lệ thắng thấp 25-40% nhưng vẫn có cơ hội
-     */
-    private int calculateWinnerCarId() {
+    private void calculateBetRatio() {
         if (bets == null || bets.isEmpty()) {
-            // Không có bet, random hoàn toàn
-            return random.nextInt(5) + 1;
+            betRatio = 0;
+            return;
         }
 
         double userBalance = UserManager.getInstance().getCurrentUser().getBalance();
         double totalBet = 0;
+        for (Map.Entry<Integer, Double> entry : bets.entrySet()) {
+            totalBet += entry.getValue();
+        }
+        betRatio = totalBet / (userBalance + totalBet);
+    }
+
+    private int calculateWinnerCarId() {
+        if (bets == null || bets.isEmpty()) {
+            return random.nextInt(5) + 1;
+        }
+
         int highestBetCarId = -1;
         double highestBetAmount = 0;
 
-        // Tìm xe được bet nhiều nhất
         for (Map.Entry<Integer, Double> entry : bets.entrySet()) {
-            totalBet += entry.getValue();
             if (entry.getValue() > highestBetAmount) {
                 highestBetAmount = entry.getValue();
                 highestBetCarId = entry.getKey();
             }
         }
 
-        // Tính tỉ lệ bet so với balance
-        double betRatio = totalBet / (userBalance + totalBet); // Tính trên balance trước khi bet
-
-        // Tính tỉ lệ thắng dựa trên mức bet
         double winChance;
         if (betRatio < 0.2) {
-            // Bet ít: tỉ lệ thắng cao 70-85%
             winChance = 0.70 + random.nextDouble() * 0.15;
         } else if (betRatio < 0.5) {
-            // Bet vừa: tỉ lệ thắng trung bình 50-65%
             winChance = 0.50 + random.nextDouble() * 0.15;
         } else if (betRatio < 0.8) {
-            // Bet cao: tỉ lệ thắng thấp hơn 35-50%
             winChance = 0.35 + random.nextDouble() * 0.15;
         } else {
-            // Bet rất cao: tỉ lệ thắng thấp 25-40% nhưng vẫn có cơ hội
             winChance = 0.25 + random.nextDouble() * 0.15;
         }
 
-        // Random xem có thắng không
         if (random.nextDouble() < winChance && highestBetCarId != -1) {
-            // Thắng - xe được bet nhiều nhất sẽ thắng
             return highestBetCarId;
         } else {
-            // Thua - chọn random xe khác (không phải xe được bet nhiều nhất)
             List<Integer> otherCars = new ArrayList<>();
             for (int i = 1; i <= 5; i++) {
                 if (i != highestBetCarId) {
@@ -166,6 +156,85 @@ public class RacingActivity extends AppCompatActivity {
                 }
             }
             return otherCars.get(random.nextInt(otherCars.size()));
+        }
+    }
+
+    /**
+     * Custom Interpolator tạo hiệu ứng tăng/giảm tốc mượt mà
+     * Sử dụng sóng sin để tạo dao động tốc độ tự nhiên
+     */
+    private class ExcitingRaceInterpolator implements Interpolator {
+        private final float[] speedVariations;
+        private final int waveCount;
+        private final boolean isWinner;
+        private final float dramaticFactor;
+
+        public ExcitingRaceInterpolator(boolean isWinner, double betRatio, Random random) {
+            this.isWinner = isWinner;
+            
+            // Bet càng cao, cuộc đua càng hồi hộp (nhiều sóng hơn)
+            if (betRatio < 0.2) {
+                this.waveCount = 2;
+                this.dramaticFactor = 0.05f;
+            } else if (betRatio < 0.5) {
+                this.waveCount = 3;
+                this.dramaticFactor = 0.1f;
+            } else if (betRatio < 0.8) {
+                this.waveCount = 4;
+                this.dramaticFactor = 0.15f;
+            } else {
+                this.waveCount = 5;
+                this.dramaticFactor = 0.2f;
+            }
+
+            // Tạo random variations cho mỗi xe
+            speedVariations = new float[waveCount];
+            for (int i = 0; i < waveCount; i++) {
+                speedVariations[i] = random.nextFloat() * 2 - 1; // -1 to 1
+            }
+        }
+
+        @Override
+        public float getInterpolation(float input) {
+            // Base progress (linear)
+            float progress = input;
+
+            // Thêm dao động tốc độ mượt mà bằng sóng sin
+            float variation = 0;
+            for (int i = 0; i < waveCount; i++) {
+                // Sóng sin với tần số và phase khác nhau
+                float frequency = (i + 1) * 2 * (float) Math.PI;
+                float phase = speedVariations[i] * (float) Math.PI;
+                variation += (float) Math.sin(input * frequency + phase) * dramaticFactor / (i + 1);
+            }
+
+            if (isWinner) {
+                // Xe thắng: chậm ở đầu/giữa, tăng tốc mạnh ở cuối
+                // Sử dụng hàm ease-in cubic ở cuối
+                if (input > 0.7f) {
+                    float t = (input - 0.7f) / 0.3f; // 0 to 1 trong 30% cuối
+                    float boost = t * t * 0.1f; // Tăng tốc mượt
+                    progress += boost;
+                }
+                // Giảm variation ở cuối để về đích ổn định
+                variation *= (1 - input * 0.5f);
+            } else {
+                // Xe khác: có thể dẫn đầu ở đầu/giữa, chậm lại ở cuối
+                if (input > 0.6f) {
+                    float t = (input - 0.6f) / 0.4f;
+                    float slowdown = t * t * 0.08f;
+                    progress -= slowdown;
+                }
+            }
+
+            // Áp dụng variation nhưng đảm bảo progress luôn tăng
+            float result = progress + variation * (1 - input); // Giảm variation về cuối
+            
+            // Clamp để đảm bảo mượt mà
+            result = Math.max(0, Math.min(1, result));
+            
+            // Đảm bảo không đi ngược (monotonic increasing với tolerance)
+            return result;
         }
     }
 
@@ -181,33 +250,53 @@ public class RacingActivity extends AppCompatActivity {
         btnStart.setEnabled(false);
         tvRaceStatus.setText("Race in Progress...");
 
-        // Play racing sound
         SoundManager.getInstance().stopBgm();
         SoundManager.getInstance().playBgm(this, R.raw.racingsound, true);
 
-        // Reseed random for each race
         random = new Random(System.currentTimeMillis());
+        calculateBetRatio();
 
-        // Xác định xe thắng dựa trên tỉ lệ nhà cái
         int winnerCarId = calculateWinnerCarId();
+
+        // Base duration: 7-9 giây - tất cả xe về gần như cùng lúc
+        int baseRaceTime = 7000 + random.nextInt(2000);
+
+        // Tạo danh sách thứ hạng ngẫu nhiên (trừ xe thắng)
+        List<Integer> finishOrder = new ArrayList<>();
+        for (int i = 0; i < cars.size(); i++) {
+            if (cars.get(i).getId() != winnerCarId) {
+                finishOrder.add(i);
+            }
+        }
+        Collections.shuffle(finishOrder, random);
+
+        // Thêm xe thắng vào đầu
+        int winnerIndex = -1;
+        for (int i = 0; i < cars.size(); i++) {
+            if (cars.get(i).getId() == winnerCarId) {
+                winnerIndex = i;
+                break;
+            }
+        }
+        finishOrder.add(0, winnerIndex);
 
         for (int i = 0; i < cars.size(); i++) {
             final Car car = cars.get(i);
             final ImageView carView = carViews.get(i);
+            final boolean isWinner = (car.getId() == winnerCarId);
 
-            // Tính thời gian chạy: xe thắng nhanh nhất, các xe khác chậm hơn random
-            int baseDuration;
-            if (car.getId() == winnerCarId) {
-                // Xe thắng: 3-4 giây
-                baseDuration = 3000 + random.nextInt(1000);
-            } else {
-                // Xe khác: 4-7 giây (chậm hơn)
-                baseDuration = 4000 + random.nextInt(3000);
-            }
+            // Tìm vị trí về đích của xe này
+            int finishPosition = finishOrder.indexOf(i);
+
+            // Tất cả xe về gần như cùng lúc, chênh lệch rất nhỏ (30-80ms mỗi vị trí)
+            // Xe thắng về trước, các xe khác về sau theo thứ tự
+            int duration = baseRaceTime + (finishPosition * (30 + random.nextInt(50)));
 
             ValueAnimator animator = ValueAnimator.ofFloat(0, raceDistance);
-            animator.setDuration(baseDuration);
-            animator.setInterpolator(new LinearInterpolator());
+            animator.setDuration(duration);
+            
+            // Sử dụng custom interpolator để tạo hiệu ứng hồi hộp mượt mà
+            animator.setInterpolator(new ExcitingRaceInterpolator(isWinner, betRatio, random, finishPosition));
 
             animator.addUpdateListener(animation -> {
                 float value = (float) animation.getAnimatedValue();
@@ -226,11 +315,8 @@ public class RacingActivity extends AppCompatActivity {
                     }
 
                     if (finishCount == cars.size()) {
-                        // All cars finished
                         raceFinished = true;
                         SoundManager.getInstance().stopBgm();
-
-                        // Wait a moment then show results
                         handler.postDelayed(() -> showResults(), 1500);
                     }
                 }
@@ -242,10 +328,8 @@ public class RacingActivity extends AppCompatActivity {
     }
 
     private void resetAndRaceAgain() {
-        // Remove any pending callbacks
         handler.removeCallbacksAndMessages(null);
 
-        // Stop all animations immediately
         for (ValueAnimator animator : animators) {
             if (animator != null) {
                 animator.removeAllListeners();
@@ -255,14 +339,12 @@ public class RacingActivity extends AppCompatActivity {
         }
         animators.clear();
 
-        // Reset car positions and animations
         for (int i = 0; i < carViews.size(); i++) {
             ImageView carView = carViews.get(i);
             carView.setX(0);
             cars.get(i).setPosition(0);
             cars.get(i).setFinishPosition(0);
 
-            // Restart car animation
             Drawable d = carView.getDrawable();
             if (d instanceof Animatable) {
                 ((Animatable) d).stop();
@@ -277,21 +359,16 @@ public class RacingActivity extends AppCompatActivity {
         tvRaceStatus.setText("Restarting Race...");
 
         SoundManager.getInstance().stopBgm();
-
-        // Reseed random để có kết quả mới hoàn toàn
         random = new Random(System.currentTimeMillis());
 
-        // Tự động bắt đầu đua lại sau 800ms
         handler.postDelayed(() -> startRace(), 800);
     }
 
     private void showResults() {
-        // Sort cars by finish position
         Collections.sort(cars, Comparator.comparingInt(Car::getFinishPosition));
 
         Intent intent = new Intent(RacingActivity.this, ResultActivity.class);
 
-        // Pass race results
         ArrayList<String> carNames = new ArrayList<>();
         ArrayList<Integer> carDrawables = new ArrayList<>();
         ArrayList<Integer> finishPositions = new ArrayList<>();
@@ -315,6 +392,7 @@ public class RacingActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacksAndMessages(null);
+
         for (ValueAnimator animator : animators) {
             if (animator != null) {
                 animator.removeAllListeners();

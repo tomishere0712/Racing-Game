@@ -12,12 +12,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.demogame.utils.SoundManager;
 import com.example.demogame.utils.UserManager;
+import com.google.android.material.textfield.TextInputLayout;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private EditText etUsername, etPassword;
+    private EditText etUsername, etPassword, etConfirmPassword;
     private Button btnLogin, btnRegister;
     private TextView tvTitle;
+    private TextInputLayout tilConfirmPassword;
     private boolean isLoginMode = true;
 
     @Override
@@ -36,9 +38,11 @@ public class LoginActivity extends AppCompatActivity {
     private void initializeViews() {
         etUsername = findViewById(R.id.etUsername);
         etPassword = findViewById(R.id.etPassword);
+        etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnLogin = findViewById(R.id.btnLogin);
         btnRegister = findViewById(R.id.btnRegister);
         tvTitle = findViewById(R.id.tvTitle);
+        tilConfirmPassword = findViewById(R.id.tilConfirmPassword);
     }
 
     private void setupListeners() {
@@ -76,8 +80,9 @@ public class LoginActivity extends AppCompatActivity {
     private void handleRegister() {
         String username = etUsername.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
+        String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-        if (username.isEmpty() || password.isEmpty()) {
+        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -92,12 +97,19 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        if (!password.equals(confirmPassword)) {
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (UserManager.getInstance().register(username, password, this)) {
-            Toast.makeText(this, "Registration successful! Starting balance: $10,000", Toast.LENGTH_LONG).show();
-            //SoundManager.getInstance().stopSound();
-            Intent intent = new Intent(LoginActivity.this, BettingActivity.class);
-            startActivity(intent);
-            finish();
+            Toast.makeText(this, "Registration successful! Please login with your new account.", Toast.LENGTH_LONG).show();
+            // Switch back to login mode after successful registration
+            switchToLoginMode();
+            // Clear the fields
+            etUsername.setText("");
+            etPassword.setText("");
+            etConfirmPassword.setText("");
         } else {
             Toast.makeText(this, "Username already exists", Toast.LENGTH_SHORT).show();
         }
@@ -108,6 +120,7 @@ public class LoginActivity extends AppCompatActivity {
         tvTitle.setText("Register");
         btnLogin.setVisibility(View.GONE);
         btnRegister.setText("Create Account");
+        tilConfirmPassword.setVisibility(View.VISIBLE);
 
         // Add a button to go back to login
         TextView tvSwitchToLogin = findViewById(R.id.tvSwitchMode);
@@ -121,6 +134,7 @@ public class LoginActivity extends AppCompatActivity {
         tvTitle.setText("Racing Game - Login");
         btnLogin.setVisibility(View.VISIBLE);
         btnRegister.setText("Register");
+        tilConfirmPassword.setVisibility(View.GONE);
 
         TextView tvSwitchToLogin = findViewById(R.id.tvSwitchMode);
         tvSwitchToLogin.setVisibility(View.GONE);

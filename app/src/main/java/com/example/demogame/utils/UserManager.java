@@ -53,8 +53,7 @@ public class UserManager {
         }
         User newUser = new User(username, password, INITIAL_BALANCE);
         users.put(username, newUser);
-        currentUser = newUser;
-        saveUserBalance(context);
+        // Don't auto-login the user after registration
         return true;
     }
 
